@@ -11,7 +11,6 @@ namespace IRDb.Database
         }
 
         public DbSet<Movie> Movies { get; set; }
-
         //Connections string kan vara här som i tidigare mappar, annars kan den göras senare
     }
 }

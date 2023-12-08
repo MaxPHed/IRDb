@@ -31,6 +31,33 @@ function addNewMovie() {
   }
 }
 
+function inputIsEmpty(title, director, year, genre, duration, rating) {
+  if (!title || !director || !year || !genre || !duration || !rating) {
+    console.log("One or more inpus is empty");
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function inputIsNotANumber(year, duration, rating) {
+  if (isNaN(year) || isNaN(duration) || isNaN(rating)) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function isInputOk(title, director, year, genre, duration, rating) {
+  if (
+    !inputIsNotANumber(year, duration, rating) &&
+    !inputIsEmpty(title, director, year, genre, duration, rating)
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
 function createEditableCard() {
   const movieURL =
     "https://thumbs.dreamstime.com/z/gradient-shaded-cartoon-no-movies-allowed-sign-illustrated-146132964.jpg";
@@ -76,20 +103,22 @@ function createEditableCard() {
     const rating = ratingInput.value;
 
     //TODO: Check for empty strings
+    if (!isInputOk(title, director, year, genre, duration, rating)) {
+    } else {
+      const newMovie = {
+        title: title,
+        director: director,
+        year: year,
+        genre: genre,
+        duration: duration,
+        rating: rating,
+      };
+      const movieFromDb = await addMovieToDb(newMovie);
+      console.log("The movie returned from DB is", movieFromDb);
 
-    const newMovie = {
-      title: title,
-      director: director,
-      year: year,
-      genre: genre,
-      duration: duration,
-      rating: rating,
-    };
-    const movieFromDb = await addMovieToDb(newMovie);
-    console.log("The movie returned from DB is", movieFromDb);
-
-    makeMovieCard(movieFromDb, cardHolder);
-    card.remove();
+      makeMovieCard(movieFromDb, cardHolder);
+      card.remove();
+    }
   });
   return card;
 }
