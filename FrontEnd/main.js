@@ -31,33 +31,55 @@ function addNewMovie() {
   }
 }
 
-function inputIsEmpty(title, director, year, genre, duration, rating) {
-  if (!title || !director || !year || !genre || !duration || !rating) {
-    console.log("One or more inpus is empty");
-    return true;
-  } else {
-    return false;
+function inputIsEmpty(value, fieldName) {
+  console.log(`Checking if ${fieldName} is empty. Received value: ${value}`);
+  if (!value.trim()) {
+    return `${fieldName} cannot be empty`;
+  }
+  return null; // No error
+}
+
+function inputIsNotANumber(value, fieldName) {
+  console.log(`Checking if ${fieldName} is a number. Received value: ${value}`);
+
+  if (isNaN(value)) {
+    return `${fieldName} is not a number`;
+  }
+  return null; // No error
+}
+
+function validateInputs(title, director, year, genre, duration, rating) {
+  const errors = {};
+
+  // Check for empty values
+  if (!title) {
+    errors.title = "Title cannot be empty";
+  }
+  if (!director) {
+    errors.director = "Director cannot be empty";
+  }
+  if (!year || isNaN(year)) {
+    errors.year = "Year must be a non-empty number";
+  }
+  if (!genre) {
+    errors.genre = "Genre cannot be empty";
+  }
+  if (!duration || isNaN(duration)) {
+    errors.duration = "Duration must be a non-empty number";
+  }
+  if (!rating || isNaN(rating)) {
+    errors.rating = "Rating must be a non-empty number";
+  }
+
+  return Object.keys(errors).length === 0 ? null : errors;
+}
+
+function removeErrorClass(inputField) {
+  if (inputField.classList.contains("error")) {
+    inputField.classList.remove("error");
   }
 }
 
-function inputIsNotANumber(year, duration, rating) {
-  if (isNaN(year) || isNaN(duration) || isNaN(rating)) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-function isInputOk(title, director, year, genre, duration, rating) {
-  if (
-    !inputIsNotANumber(year, duration, rating) &&
-    !inputIsEmpty(title, director, year, genre, duration, rating)
-  ) {
-    return true;
-  } else {
-    return false;
-  }
-}
 function createEditableCard() {
   const movieURL =
     "https://thumbs.dreamstime.com/z/gradient-shaded-cartoon-no-movies-allowed-sign-illustrated-146132964.jpg";
@@ -71,12 +93,12 @@ function createEditableCard() {
   card.appendChild(cardBody);
 
   // Create input fields for the new movie
-  const titleInput = createInputField("Title");
-  const directorInput = createInputField("Director");
-  const yearInput = createInputField("Year");
-  const durationInput = createInputField("Duration");
-  const genreInput = createInputField("Genre");
-  const ratingInput = createInputField("Rating");
+  const titleInput = createInputField("Title", "Title");
+  const directorInput = createInputField("Director", "Director");
+  const yearInput = createInputField("Year", "Year");
+  const durationInput = createInputField("Duration", "Duration");
+  const genreInput = createInputField("Genre", "Genre");
+  const ratingInput = createInputField("Rating", "Rating");
 
   // Append input fields to the card body
   cardBody.appendChild(titleInput);
@@ -101,9 +123,48 @@ function createEditableCard() {
     const genre = genreInput.value;
     const duration = durationInput.value;
     const rating = ratingInput.value;
+    // Remove "error" class for all input fields
+    removeErrorClass(titleInput);
+    removeErrorClass(directorInput);
+    removeErrorClass(yearInput);
+    removeErrorClass(genreInput);
+    removeErrorClass(durationInput);
+    removeErrorClass(ratingInput);
 
-    //TODO: Check for empty strings
-    if (!isInputOk(title, director, year, genre, duration, rating)) {
+    errors = validateInputs(title, director, year, genre, duration, rating);
+    console.log(errors);
+    if (errors !== null) {
+      // Display error messages
+      Object.keys(errors).forEach((fieldName) => {
+        const errorMessage = errors[fieldName];
+        const inputField = document.getElementById(
+          `${fieldName.toLowerCase()}Input`
+        );
+        let errorContainer = document.getElementById(
+          `${fieldName.toLowerCase()}Error`
+        );
+        //Deletes the error class
+
+        if (!errorContainer) {
+          errorContainer = document.createElement("div");
+          errorContainer.id = `${fieldName.toLowerCase()}Error`;
+        }
+
+        console.log("fieldName:", fieldName);
+        console.log("inputField ID:", inputField.id);
+
+        if (errorMessage !== null) {
+          inputField.classList.add("error");
+          errorContainer.innerText = errorMessage;
+          errorContainer.style.display = "block";
+          errorContainer.id = `${fieldName.toLowerCase()}Error`;
+          console.log("errorContainer ID:", errorContainer.id);
+        } else {
+          inputField.classList.remove("error");
+          errorContainer.innerText = "";
+          errorContainer.style.display = "none";
+        }
+      });
     } else {
       const newMovie = {
         title: title,
@@ -123,10 +184,12 @@ function createEditableCard() {
   return card;
 }
 
-function createInputField(placeholder) {
+function createInputField(placeholder, fieldName) {
   const input = document.createElement("input");
   input.classList.add("form-control");
   input.placeholder = placeholder;
+  input.id = `${fieldName.toLowerCase()}Input`;
+
   return input;
 }
 
@@ -257,37 +320,37 @@ async function makeMovieCard(movie, cardDiv) {
 
     // Replace the text content with input fields
     title.innerText = "";
-    const titleInput = document.createElement("input");
+    const titleInput = createInputField("Title", "Title");
     titleInput.classList.add("form-control");
     titleInput.placeholder = movie.title;
     title.appendChild(titleInput);
 
     director.innerText = "";
-    const directorInput = document.createElement("input");
+    const directorInput = createInputField("Director", "Director");
     directorInput.classList.add("form-control");
     directorInput.placeholder = movie.director;
     director.appendChild(directorInput);
 
     listIYear.innerText = "";
-    const yearInput = document.createElement("input");
+    const yearInput = createInputField("Year", "Year");
     yearInput.classList.add("form-control");
     yearInput.placeholder = movie.year;
     listIYear.appendChild(yearInput);
 
     listIDuration.innerText = "";
-    const durationInput = document.createElement("input");
+    const durationInput = createInputField("Duration", "Duration");
     durationInput.classList.add("form-control");
     durationInput.placeholder = movie.duration;
     listIDuration.appendChild(durationInput);
 
     listIGenre.innerText = "";
-    const genreInput = document.createElement("input");
+    const genreInput = createInputField("Genre", "Genre");
     genreInput.classList.add("form-control");
     genreInput.placeholder = movie.genre;
     listIGenre.appendChild(genreInput);
 
     listIRating.innerText = "";
-    const ratingInput = document.createElement("input");
+    const ratingInput = createInputField("Rating", "Rating");
     ratingInput.classList.add("form-control");
     ratingInput.placeholder = movie.rating;
     listIRating.appendChild(ratingInput);
@@ -310,29 +373,80 @@ async function makeMovieCard(movie, cardDiv) {
       const updatedGenre = genreInput.value || movie.genre;
       const updatedDuration = durationInput.value || movie.duration;
       const updatedRating = ratingInput.value || movie.rating;
+      // Remove "error" class for all input fields
+      removeErrorClass(titleInput);
+      removeErrorClass(directorInput);
+      removeErrorClass(yearInput);
+      removeErrorClass(genreInput);
+      removeErrorClass(durationInput);
+      removeErrorClass(ratingInput);
 
-      try {
-        // Update the movie in the API
-        const response = await updateMovie(movie.id, {
-          title: updatedTitle,
-          director: updatedDirector,
-          year: updatedYear,
-          genre: updatedGenre,
-          duration: updatedDuration,
-          rating: updatedRating,
+      //Check for invalid input
+      errors = validateInputs(
+        updatedTitle,
+        updatedDirector,
+        updatedYear,
+        updatedGenre,
+        updatedDuration,
+        updatedRating
+      );
+      console.log(errors);
+      if (errors !== null) {
+        // Display error messages
+        Object.keys(errors).forEach((fieldName) => {
+          const errorMessage = errors[fieldName];
+          const inputField = document.getElementById(
+            `${fieldName.toLowerCase()}Input`
+          );
+          let errorContainer = document.getElementById(
+            `${fieldName.toLowerCase()}Error`
+          );
+          //Deletes the error class
+
+          if (!errorContainer) {
+            errorContainer = document.createElement("div");
+            errorContainer.id = `${fieldName.toLowerCase()}Error`;
+          }
+
+          console.log("fieldName:", fieldName);
+          console.log("inputField ID:", inputField.id);
+
+          if (errorMessage !== null) {
+            inputField.classList.add("error");
+            errorContainer.innerText = errorMessage;
+            errorContainer.style.display = "block";
+            errorContainer.id = `${fieldName.toLowerCase()}Error`;
+            console.log("errorContainer ID:", errorContainer.id);
+          } else {
+            inputField.classList.remove("error");
+            errorContainer.innerText = "";
+            errorContainer.style.display = "none";
+          }
         });
+      } else {
+        try {
+          // Update the movie in the API
+          const response = await updateMovie(movie.id, {
+            title: updatedTitle,
+            director: updatedDirector,
+            year: updatedYear,
+            genre: updatedGenre,
+            duration: updatedDuration,
+            rating: updatedRating,
+          });
 
-        if (response.ok) {
-          card.remove();
-          await getOneMovieByIdAndCreateCard(movie.id);
-        } else {
-          // Waiting for DB to update and try again
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          card.remove();
-          await getOneMovieByIdAndCreateCard(movie.id);
+          if (response.ok) {
+            card.remove();
+            await getOneMovieByIdAndCreateCard(movie.id);
+          } else {
+            // Waiting for DB to update and try again
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            card.remove();
+            await getOneMovieByIdAndCreateCard(movie.id);
+          }
+        } catch (error) {
+          console.error("Error updating movie:", error);
         }
-      } catch (error) {
-        console.error("Error updating movie:", error);
       }
     });
   });
