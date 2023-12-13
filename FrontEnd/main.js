@@ -2,15 +2,11 @@ const cardHolder = document.querySelector("#card-holder");
 let userArray = [];
 const apiUrl = "https://localhost:7268/api/Movies";
 
-// GET all movies in Db and make a card of them
-fetch(apiUrl)
-  .then((res) => res.json())
-  .then((data) => {
-    data.forEach((movie) => {
-      makeMovieCard(movie, cardHolder);
-      userArray.push(movie);
-    });
-  });
+// Initialize tooltips
+initTooltips();
+
+// Fetch movies on page load
+fetchMovies();
 
 //Selectors
 const newMovieBtn = document.querySelector("#new-movie-btn");
@@ -19,6 +15,36 @@ const newMovieBtn = document.querySelector("#new-movie-btn");
 newMovieBtn.addEventListener("click", addNewMovie);
 
 //Functions
+
+// Enable Bootstrap tooltips, popovers, etc.
+function initTooltips() {
+  const tooltipTriggerList = document.querySelectorAll(
+    '[data-bs-toggle="tooltip"]'
+  );
+  tooltipTriggerList.forEach(
+    (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
+  );
+}
+
+// GET all movies in Db and make a card of them
+async function fetchMovies() {
+  try {
+    const response = await fetch(apiUrl);
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    const data = await response.json();
+
+    // Render movies on the UI
+    renderMovies(data);
+  } catch (error) {
+    console.error("Error fetching movies:", error);
+  }
+}
+
+function renderMovies(movies) {
+  const cardHolder = document.querySelector("#card-holder");
+  movies.forEach((movie) => makeMovieCard(movie, cardHolder));
+}
+
 function addNewMovie() {
   // Create a new card with writable fields
   console.log("InAddnewmoviefunc");
@@ -31,45 +57,43 @@ function addNewMovie() {
   }
 }
 
+//Functions for validating input
 function inputIsEmpty(value, fieldName) {
   console.log(`Checking if ${fieldName} is empty. Received value: ${value}`);
-  if (!value.trim()) {
-    return `${fieldName} cannot be empty`;
-  }
-  return null; // No error
+  return !value ? `${fieldName} cannot be empty` : null;
 }
 
 function inputIsNotANumber(value, fieldName) {
   console.log(`Checking if ${fieldName} is a number. Received value: ${value}`);
-
-  if (isNaN(value)) {
-    return `${fieldName} is not a number`;
-  }
-  return null; // No error
+  return isNaN(value) ? `${fieldName} must be a number` : null;
 }
 
 function validateInputs(title, director, year, genre, duration, rating) {
   const errors = {};
 
-  // Check for empty values
-  if (!title) {
-    errors.title = "Title cannot be empty";
+  // Check for empty values using inputIsEmpty function
+  errors.title = inputIsEmpty(title, "Title");
+  errors.director = inputIsEmpty(director, "Director");
+  errors.year = inputIsEmpty(year, "Year");
+  errors.genre = inputIsEmpty(genre, "Genre");
+  errors.duration = inputIsEmpty(duration, "Duration");
+  errors.rating = inputIsEmpty(rating, "Rating");
+
+  // Check if year, duration, and rating are numbers using inputIsNotANumber function
+  if (errors.year === null) {
+    errors.year = inputIsNotANumber(year, "Year");
   }
-  if (!director) {
-    errors.director = "Director cannot be empty";
+  if (errors.duration === null) {
+    errors.duration = inputIsNotANumber(duration, "Duration");
   }
-  if (!year || isNaN(year)) {
-    errors.year = "Year must be a non-empty number";
+  if (errors.rating === null) {
+    errors.rating = inputIsNotANumber(rating, "Rating");
   }
-  if (!genre) {
-    errors.genre = "Genre cannot be empty";
-  }
-  if (!duration || isNaN(duration)) {
-    errors.duration = "Duration must be a non-empty number";
-  }
-  if (!rating || isNaN(rating)) {
-    errors.rating = "Rating must be a non-empty number";
-  }
+
+  // Remove null entries from the errors object
+  Object.keys(errors).forEach(
+    (key) => errors[key] === null && delete errors[key]
+  );
 
   return Object.keys(errors).length === 0 ? null : errors;
 }
@@ -80,6 +104,44 @@ function removeErrorClass(inputField) {
   }
 }
 
+function displayErrorMessage(errors) {
+  // Display error messages
+  Object.keys(errors).forEach((fieldName) => {
+    const errorMessage = errors[fieldName];
+    const inputField = document.getElementById(
+      `${fieldName.toLowerCase()}Input`
+    );
+    let errorContainer = document.getElementById(
+      `${fieldName.toLowerCase()}Error`
+    );
+
+    if (!errorContainer) {
+      errorContainer = document.createElement("div");
+      //errorContainer.classList.add("error-message"); // Add a class for styling
+      errorContainer.id = `${fieldName.toLowerCase()}Error`;
+    }
+
+    console.log("fieldName:", fieldName);
+    console.log("inputField ID:", inputField.id);
+
+    if (errorMessage !== null) {
+      inputField.classList.add("error");
+      errorContainer.innerText = errorMessage;
+      errorContainer.style.display = "block";
+      errorContainer.id = `${fieldName.toLowerCase()}Error`;
+
+      inputField.parentNode.appendChild(errorContainer);
+
+      console.log("errorContainer ID:", errorContainer.id);
+    } else {
+      inputField.classList.remove("error");
+      errorContainer.innerText = "";
+      errorContainer.style.display = "none";
+    }
+  });
+}
+
+//Function for creating an editable card
 function createEditableCard() {
   const movieURL =
     "https://thumbs.dreamstime.com/z/gradient-shaded-cartoon-no-movies-allowed-sign-illustrated-146132964.jpg";
@@ -134,37 +196,7 @@ function createEditableCard() {
     errors = validateInputs(title, director, year, genre, duration, rating);
     console.log(errors);
     if (errors !== null) {
-      // Display error messages
-      Object.keys(errors).forEach((fieldName) => {
-        const errorMessage = errors[fieldName];
-        const inputField = document.getElementById(
-          `${fieldName.toLowerCase()}Input`
-        );
-        let errorContainer = document.getElementById(
-          `${fieldName.toLowerCase()}Error`
-        );
-        //Deletes the error class
-
-        if (!errorContainer) {
-          errorContainer = document.createElement("div");
-          errorContainer.id = `${fieldName.toLowerCase()}Error`;
-        }
-
-        console.log("fieldName:", fieldName);
-        console.log("inputField ID:", inputField.id);
-
-        if (errorMessage !== null) {
-          inputField.classList.add("error");
-          errorContainer.innerText = errorMessage;
-          errorContainer.style.display = "block";
-          errorContainer.id = `${fieldName.toLowerCase()}Error`;
-          console.log("errorContainer ID:", errorContainer.id);
-        } else {
-          inputField.classList.remove("error");
-          errorContainer.innerText = "";
-          errorContainer.style.display = "none";
-        }
-      });
+      displayErrorMessage(errors);
     } else {
       const newMovie = {
         title: title,
@@ -392,37 +424,7 @@ async function makeMovieCard(movie, cardDiv) {
       );
       console.log(errors);
       if (errors !== null) {
-        // Display error messages
-        Object.keys(errors).forEach((fieldName) => {
-          const errorMessage = errors[fieldName];
-          const inputField = document.getElementById(
-            `${fieldName.toLowerCase()}Input`
-          );
-          let errorContainer = document.getElementById(
-            `${fieldName.toLowerCase()}Error`
-          );
-          //Deletes the error class
-
-          if (!errorContainer) {
-            errorContainer = document.createElement("div");
-            errorContainer.id = `${fieldName.toLowerCase()}Error`;
-          }
-
-          console.log("fieldName:", fieldName);
-          console.log("inputField ID:", inputField.id);
-
-          if (errorMessage !== null) {
-            inputField.classList.add("error");
-            errorContainer.innerText = errorMessage;
-            errorContainer.style.display = "block";
-            errorContainer.id = `${fieldName.toLowerCase()}Error`;
-            console.log("errorContainer ID:", errorContainer.id);
-          } else {
-            inputField.classList.remove("error");
-            errorContainer.innerText = "";
-            errorContainer.style.display = "none";
-          }
-        });
+        displayErrorMessage(errors);
       } else {
         try {
           // Update the movie in the API

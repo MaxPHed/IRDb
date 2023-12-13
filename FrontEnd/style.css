@@ -8,11 +8,18 @@
   border: 1px solid red;
 }
 
+.card {
+  background-color: #f8f9fa; /* Set a background color */
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow */
+  transition: background-color 0.3s ease; /* Add a smooth transition effect */
+}
+
 nav {
   height: 100px;
   width: 100vw;
   background-color: antiquewhite;
   padding: 10px;
+  margin-bottom: 20;
 
   /* Flex Settings*/
 
